@@ -52,6 +52,10 @@ public class YPImagePicker: UINavigationController {
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
+    public override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .portrait
+    }
     
     override public func viewDidLoad() {
         super.viewDidLoad()

@@ -34,15 +34,18 @@ class YPFiltersView: UIView {
         let isIphone4 = UIScreen.main.bounds.height == 480
         let sideMargin: CGFloat = isIphone4 ? 20 : 0
         
-        |-sideMargin-imageView.top(0)-sideMargin-|
         |-sideMargin-collectionViewContainer-sideMargin-|
         collectionViewContainer.bottom(0)
-        imageView.Bottom == collectionViewContainer.Top
-        |collectionView.centerVertically().height(160)|
+        imageView.Bottom <= collectionViewContainer.Top
+        |-sideMargin-imageView.top(0)-sideMargin-|
+
+        layout(
+            0,
+            |collectionView.centerVertically().height(140)|,
+            0
+        )
         filtersLoader.centerInContainer()
-        
-        imageView.heightEqualsWidth()
-        
+
         backgroundColor = UIColor(r: 247, g: 247, b: 247)
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true

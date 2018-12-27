@@ -13,7 +13,6 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
     
     let focusView = UIView(frame: CGRect(x: 0, y: 0, width: 90, height: 90))
     let previewViewContainer = UIView()
-    let buttonsContainer = UIView()
     let flipButton = UIButton()
     let shotButton = UIButton()
     let flashButton = UIButton()
@@ -32,9 +31,7 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
                 timeElapsedLabel,
                 flashButton,
                 flipButton,
-                buttonsContainer.sv(
-                    shotButton
-                )
+                shotButton
             )
         } else {
             // View Hierarchy
@@ -44,9 +41,7 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
                 timeElapsedLabel,
                 flashButton,
                 flipButton,
-                buttonsContainer.sv(
-                    shotButton
-                )
+                shotButton
             )
         }
         
@@ -56,27 +51,25 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
         layout(
             0,
             |-sideMargin-previewViewContainer-sideMargin-|,
-            -2,
-            |progressBar|,
-            0,
-            |buttonsContainer|,
             0
         )
-        previewViewContainer.heightEqualsWidth()
+
+        progressBar.centerVertically()
+        progressBar.centerHorizontally()
 
         overlayView?.followEdges(previewViewContainer)
 
         |-(15+sideMargin)-flashButton.size(42)
-        flashButton.Bottom == previewViewContainer.Bottom - 15
+        flashButton.Top == shotButton.Top
 
         flipButton.size(42)-(15+sideMargin)-|
-        flipButton.Bottom == previewViewContainer.Bottom - 15
+        flipButton.Top == shotButton.Top
         
         timeElapsedLabel-(15+sideMargin)-|
         timeElapsedLabel.Top == previewViewContainer.Top + 15
-        
-        shotButton.centerVertically()
-        shotButton.size(84).centerHorizontally()
+
+        shotButton.Bottom == Bottom - 42
+        shotButton.centerHorizontally()
 
         // Style
         backgroundColor = YPConfig.colors.photoVideoScreenBackground
