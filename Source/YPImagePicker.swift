@@ -25,6 +25,8 @@ public class YPImagePicker: UINavigationController {
     public override var preferredStatusBarStyle: UIStatusBarStyle {
         return YPImagePickerConfiguration.shared.preferredStatusBarStyle
     }
+
+    public private(set) weak var filterVC: YPPhotoFiltersVC?
     
     // This nifty little trick enables us to call the single version of the callbacks.
     // This keeps the backwards compatibility keeps the api as simple as possible.
@@ -120,21 +122,22 @@ public class YPImagePicker: UINavigationController {
                 }
                 
                 if showsFilters {
-                    let filterVC: YPPhotoFiltersVC
+                    let filterViewController: YPPhotoFiltersVC
                     if let filter = YPConfig.initialFilter {
-                        filterVC = YPPhotoFiltersVC(inputPhoto: photo,
+                        filterViewController = YPPhotoFiltersVC(inputPhoto: photo,
                                                     isFromSelectionVC: false, initialFilter: filter)
                     } else {
-                        filterVC = YPPhotoFiltersVC(inputPhoto: photo,
+                        filterViewController = YPPhotoFiltersVC(inputPhoto: photo,
                                                     isFromSelectionVC: false)
                     }
                     // Show filters and then crop
-                    filterVC.didSave = { outputMedia in
+                    filterViewController.didSave = { outputMedia in
                         if case let YPMediaItem.photo(outputPhoto) = outputMedia {
                             showCropVC(photo: outputPhoto, completion: completion)
                         }
                     }
-                    self?.pushViewController(filterVC, animated: false)
+                    self?.filterVC = filterViewController
+                    self?.pushViewController(filterViewController, animated: false)
                 } else {
                     showCropVC(photo: photo, completion: completion)
                 }

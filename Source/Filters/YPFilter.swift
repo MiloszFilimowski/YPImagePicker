@@ -12,7 +12,7 @@ import CoreImage
 public typealias FilterApplierType = ((_ image: CIImage) -> CIImage?)
 
 public struct YPFilter: Equatable {
-    var name = ""
+    public private(set) var name = ""
     var applier: FilterApplierType?
     
     public init(name: String, coreImageFilterName: String) {
