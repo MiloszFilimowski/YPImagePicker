@@ -11,7 +11,7 @@ import CoreImage
 
 public typealias FilterApplierType = ((_ image: CIImage) -> CIImage?)
 
-public struct YPFilter {
+public struct YPFilter: Equatable {
     var name = ""
     var applier: FilterApplierType?
     
@@ -23,6 +23,13 @@ public struct YPFilter {
     public init(name: String, applier: FilterApplierType?) {
         self.name = name
         self.applier = applier
+    }
+
+    public static func == (lhs: YPFilter, rhs: YPFilter) -> Bool {
+        guard !lhs.name.isEmpty && lhs.applier != nil && !rhs.name.isEmpty && rhs.applier != nil else {
+            return false
+        }
+        return lhs.name == rhs.name
     }
 }
 

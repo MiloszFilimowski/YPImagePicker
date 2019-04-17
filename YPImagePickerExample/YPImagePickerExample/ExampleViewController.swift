@@ -82,6 +82,10 @@ class ExampleViewController: UIViewController {
         /* Choose what media types are available in the library. Defaults to `.photo` */
         config.library.mediaType = .photoAndVideo
 
+        config.showsFilters = true
+        config.initialFilter = YPFilter(name: "Clarendon", applier: YPFilter.clarendonFilter)
+
+
         /* Enables selecting the front camera by default, useful for avatars. Defaults to false */
         // config.usesFrontCamera = true
 

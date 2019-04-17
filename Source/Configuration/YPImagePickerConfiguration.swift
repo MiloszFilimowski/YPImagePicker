@@ -45,6 +45,9 @@ public struct YPImagePickerConfiguration {
     
     /// Adds a Filter step in the photo taking process.  Defaults to true
     public var showsFilters = true
+
+    /// The initial filter to set as activie on ImagePicker.
+    public var initialFilter: YPFilter?
     
     /// Enables you to opt out from saving new (or old but filtered) images to the
     /// user's photo library. Defaults to true.
@@ -107,6 +110,28 @@ public struct YPImagePickerConfiguration {
         YPFilter(name: "Linear", coreImageFilterName: "CISRGBToneCurveToLinear"),
         YPFilter(name: "Sepia", coreImageFilterName: "CISepiaTone"),
         ]
+
+    // Filters
+
+    public struct DefaultFilters {
+        public static let normal = YPFilter(name: "Normal", applier: nil)
+        public static let nashville = YPFilter(name: "Nashville", applier: YPFilter.nashvilleFilter)
+        public static let toaster = YPFilter(name: "Toaster", applier: YPFilter.toasterFilter)
+        public static let nineteenSeventySeven = YPFilter(name: "1977", applier: YPFilter.apply1977Filter)
+        public static let clarendon = YPFilter(name: "Clarendon", applier: YPFilter.clarendonFilter)
+        public static let hazeRemoval = YPFilter(name: "HazeRemoval", applier: YPFilter.hazeRemovalFilter)
+        public static let chrome = YPFilter(name: "Chrome", coreImageFilterName: "CIPhotoEffectChrome")
+        public static let fade = YPFilter(name: "Fade", coreImageFilterName: "CIPhotoEffectFade")
+        public static let instant = YPFilter(name: "Instant", coreImageFilterName: "CIPhotoEffectInstant")
+        public static let mono = YPFilter(name: "Mono", coreImageFilterName: "CIPhotoEffectMono")
+        public static let noir = YPFilter(name: "Noir", coreImageFilterName: "CIPhotoEffectNoir")
+        public static let process = YPFilter(name: "Process", coreImageFilterName: "CIPhotoEffectProcess")
+        public static let tonal = YPFilter(name: "Tonal", coreImageFilterName: "CIPhotoEffectTonal")
+        public static let transfer = YPFilter(name: "Transfer", coreImageFilterName: "CIPhotoEffectTransfer")
+        public static let tone = YPFilter(name: "Tone", coreImageFilterName: "CILinearToSRGBToneCurve")
+        public static let linear = YPFilter(name: "Linear", coreImageFilterName: "CISRGBToneCurveToLinear")
+        public static let sepia = YPFilter(name: "Sepia", coreImageFilterName: "CISepiaTone")
+    }
     
     /// Migration
     

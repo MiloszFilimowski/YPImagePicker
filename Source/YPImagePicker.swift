@@ -120,8 +120,14 @@ public class YPImagePicker: UINavigationController {
                 }
                 
                 if showsFilters {
-                    let filterVC = YPPhotoFiltersVC(inputPhoto: photo,
+                    let filterVC: YPPhotoFiltersVC
+                    if let filter = YPConfig.initialFilter {
+                        filterVC = YPPhotoFiltersVC(inputPhoto: photo,
+                                                    isFromSelectionVC: false, initialFilter: filter)
+                    } else {
+                        filterVC = YPPhotoFiltersVC(inputPhoto: photo,
                                                     isFromSelectionVC: false)
+                    }
                     // Show filters and then crop
                     filterVC.didSave = { outputMedia in
                         if case let YPMediaItem.photo(outputPhoto) = outputMedia {

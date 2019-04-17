@@ -15,11 +15,12 @@ protocol IsMediaFilterVC: class {
 
 open class YPPhotoFiltersVC: UIViewController, IsMediaFilterVC, UIGestureRecognizerDelegate {
     
-    required public init(inputPhoto: YPMediaPhoto, isFromSelectionVC: Bool) {
+    required public init(inputPhoto: YPMediaPhoto, isFromSelectionVC: Bool, initialFilter: YPFilter? = nil) {
         super.init(nibName: nil, bundle: nil)
         
         self.inputPhoto = inputPhoto
         self.isFromSelectionVC = isFromSelectionVC
+        self.selectedFilter = initialFilter
     }
     
     public var inputPhoto: YPMediaPhoto!
@@ -31,7 +32,11 @@ open class YPPhotoFiltersVC: UIViewController, IsMediaFilterVC, UIGestureRecogni
 
     fileprivate let filters: [YPFilter] = YPConfig.filters
 
-    fileprivate var selectedFilter: YPFilter?
+    public fileprivate(set) var selectedFilter: YPFilter? {
+        didSet {
+            refreshSelectedImage()
+        }
+    }
     
     fileprivate var filteredThumbnailImagesArray: [UIImage] = []
     fileprivate var thumbnailImageForFiltering: CIImage? // Small image for creating filters thumbnails
@@ -51,7 +56,8 @@ open class YPPhotoFiltersVC: UIViewController, IsMediaFilterVC, UIGestureRecogni
         // Setup of main image an thumbnail images
         v.imageView.image = inputPhoto.image
         thumbnailImageForFiltering = thumbFromImage(inputPhoto.image)
-        DispatchQueue.global().async {
+        DispatchQueue.global().async { [weak self] in
+            guard let `self` = self else { return }
             self.filteredThumbnailImagesArray = self.filters.map { filter -> UIImage in
                 if let applier = filter.applier,
                     let thumbnailImage = self.thumbnailImageForFiltering,
@@ -61,11 +67,17 @@ open class YPPhotoFiltersVC: UIViewController, IsMediaFilterVC, UIGestureRecogni
                     return self.inputPhoto.originalImage
                 }
             }
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
+                guard let `self` = self else { return }
+
+                self.refreshSelectedImage()
                 self.v.collectionView.reloadData()
-                self.v.collectionView.selectItem(at: IndexPath(row: 0, section: 0),
+                let initialIndex = self.filters.index(where: { $0 == self.selectedFilter }) ?? 0
+                let indexPath = IndexPath(row: initialIndex, section: 0)
+                self.v.collectionView.selectItem(at: IndexPath(row: initialIndex, section: 0),
                                             animated: false,
-                                            scrollPosition: UICollectionView.ScrollPosition.bottom)
+                                            scrollPosition: .centeredHorizontally)
+                self.v.collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: false)
                 self.v.filtersLoader.stopAnimating()
             }
         }
@@ -109,6 +121,13 @@ open class YPPhotoFiltersVC: UIViewController, IsMediaFilterVC, UIGestureRecogni
     }
     
     // MARK: - Methods 🏓
+
+    fileprivate func refreshSelectedImage() {
+        if let index = filters.index(where: { $0 == selectedFilter }) {
+            currentlySelectedImageThumbnail = filteredThumbnailImagesArray[index]
+            self.v.imageView.image = currentlySelectedImageThumbnail
+        }
+    }
 
     @objc
     fileprivate func handleTouchDown(sender: UILongPressGestureRecognizer) {
@@ -186,7 +205,5 @@ extension YPPhotoFiltersVC: UICollectionViewDataSource {
 extension YPPhotoFiltersVC: UICollectionViewDelegate {
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         selectedFilter = filters[indexPath.row]
-        currentlySelectedImageThumbnail = filteredThumbnailImagesArray[indexPath.row]
-        self.v.imageView.image = currentlySelectedImageThumbnail
     }
 }
