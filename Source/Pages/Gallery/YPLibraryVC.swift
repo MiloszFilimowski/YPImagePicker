@@ -34,17 +34,13 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     }
     
     func setAlbum(_ album: YPAlbum) {
+        title = album.title
         mediaManager.collection = album.collection
-        resetMultipleSelection()
-    }
-    
-    private func resetMultipleSelection() {
-        selection.removeAll()
         currentlySelectedIndex = 0
-        multipleSelectionEnabled = false
-        v.assetViewContainer.setMultipleSelectionMode(on: false)
-        delegate?.libraryViewDidToggleMultipleSelection(enabled: false)
-        checkLimit()
+        if !multipleSelectionEnabled {
+            selection.removeAll()
+        }
+        refreshMediaRequest()
     }
     
     func initialize() {
@@ -60,7 +56,10 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
         panGestureHelper.registerForPanGesture(on: v)
         registerForTapOnPreview()
         refreshMediaRequest()
-        
+
+        if YPConfig.library.defaultMultipleSelection {
+            multipleSelectionButtonTapped()
+        }
         v.assetViewContainer.multipleSelectionButton.isHidden = !(YPConfig.library.maxNumberOfItems > 1)
         v.maxNumberWarningLabel.text = String(format: YPConfig.wordings.warningMaxItemsLimit, YPConfig.library.maxNumberOfItems)
     }
@@ -82,9 +81,8 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
             guard let strongSelf = self else {
                 return
             }
-            if strongSelf.multipleSelectionEnabled {
-                strongSelf.updateCropInfo()
-            }
+
+            strongSelf.updateCropInfo()
         }
     }
     
@@ -135,6 +133,10 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     @objc
     func multipleSelectionButtonTapped() {
         
+        if !multipleSelectionEnabled {
+            selection.removeAll()
+        }
+        
         // Prevent desactivating multiple selection when using `minNumberOfItems`
         if YPConfig.library.minNumberOfItems > 1 && multipleSelectionEnabled {
             return
@@ -144,11 +146,13 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
 
         if multipleSelectionEnabled {
             if selection.isEmpty {
+                let asset = mediaManager.fetchResult[currentlySelectedIndex]
                 selection = [
                     YPLibrarySelection(index: currentlySelectedIndex,
                                        cropRect: v.currentCropRect(),
                                        scrollViewContentOffset: v.assetZoomableView!.contentOffset,
-                                       scrollViewZoomScale: v.assetZoomableView!.zoomScale)
+                                       scrollViewZoomScale: v.assetZoomableView!.zoomScale,
+                                       assetIdentifier: asset.localIdentifier)
                 ]
             }
         } else {
@@ -221,6 +225,8 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                     block(s == .authorized)
                 }
             }
+        @unknown default:
+            fatalError("Case not supported")
         }
     }
     
@@ -240,7 +246,9 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
             v.collectionView.selectItem(at: IndexPath(row: 0, section: 0),
                                              animated: false,
                                              scrollPosition: UICollectionView.ScrollPosition())
-            addToSelection(indexPath: IndexPath(row: 0, section: 0))
+            if !multipleSelectionEnabled {
+                addToSelection(indexPath: IndexPath(row: 0, section: 0))
+            }
         } else {
             delegate?.noPhotosForOptions()
         }
@@ -297,6 +305,8 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                                                   completion: completion)
             case .audio, .unknown:
                 ()
+            @unknown default:
+                fatalError("Case not supported")
             }
         }
     }
@@ -313,7 +323,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
         
         if tooLong || tooShort {
             DispatchQueue.main.async {
-                let alert = tooLong ? YPAlert.videoTooLongAlert() : YPAlert.videoTooShortAlert()
+                let alert = tooLong ? YPAlert.videoTooLongAlert(self.view) : YPAlert.videoTooShortAlert(self.view)
                 self.present(alert, animated: true, completion: nil)
             }
             return false
@@ -325,7 +335,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
     // MARK: - Stored Crop Position
     
     internal func updateCropInfo(shouldUpdateOnlyIfNil: Bool = false) {
-        guard let selectedAssetIndex = selection.index(where: { $0.index == currentlySelectedIndex }) else {
+        guard let selectedAssetIndex = selection.firstIndex(where: { $0.index == currentlySelectedIndex }) else {
             return
         }
         
@@ -348,7 +358,7 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
         if self.multipleSelectionEnabled,
             self.selection.contains(where: { $0.index == self.currentlySelectedIndex }) {
             guard let selectedAssetIndex = self.selection
-                .index(where: { $0.index == self.currentlySelectedIndex }) else {
+                .firstIndex(where: { $0.index == self.currentlySelectedIndex }) else {
                 return nil
             }
             return self.selection[selectedAssetIndex]
@@ -392,54 +402,80 @@ public class YPLibraryVC: UIViewController, YPPermissionCheckable {
                               videoCallback: @escaping (_ videoURL: YPMediaVideo) -> Void,
                               multipleItemsCallback: @escaping (_ items: [YPMediaItem]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
+            
             let selectedAssets: [(asset: PHAsset, cropRect: CGRect?)] = self.selection.map {
-                return (self.mediaManager.fetchResult[$0.index], $0.cropRect)
+                guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [$0.assetIdentifier], options: PHFetchOptions()).firstObject else { fatalError() }
+                return (asset, $0.cropRect)
             }
-
-            // Check video length
-            for asset in selectedAssets {
-                if self.fitsVideoLengthLimits(asset: asset.asset) == false {
-                    return
+            
+            // Multiple selection
+            if self.multipleSelectionEnabled && self.selection.count > 1 {
+                
+                // Check video length
+                for asset in selectedAssets {
+                    if self.fitsVideoLengthLimits(asset: asset.asset) == false {
+                        return
+                    }
                 }
-            }
-
-            // Fill result media items array
-            var resultMediaItems: [YPMediaItem] = []
-            let asyncGroup = DispatchGroup()
-
-            for asset in selectedAssets {
-                asyncGroup.enter()
-
-                switch asset.asset.mediaType {
-                case .image:
-                    self.fetchImageAndCrop(for: asset.asset, withCropRect: asset.cropRect) { image, exifMeta in
-                        let photo = YPMediaPhoto(image: image.resizedImageIfNeeded(), exifMeta: exifMeta, asset: asset.asset)
-                        resultMediaItems.append(YPMediaItem.photo(p: photo))
-                        asyncGroup.leave()
+                
+                // Fill result media items array
+                var resultMediaItems: [YPMediaItem] = []
+                let asyncGroup = DispatchGroup()
+                
+                for asset in selectedAssets {
+                    asyncGroup.enter()
+                    
+                    switch asset.asset.mediaType {
+                    case .image:
+                        self.fetchImageAndCrop(for: asset.asset, withCropRect: asset.cropRect) { image, exifMeta in
+                            let photo = YPMediaPhoto(image: image.resizedImageIfNeeded(), exifMeta: exifMeta, asset: asset.asset)
+                            resultMediaItems.append(YPMediaItem.photo(p: photo))
+                            asyncGroup.leave()
+                        }
+                        
+                    case .video:
+                        self.checkVideoLengthAndCrop(for: asset.asset, withCropRect: asset.cropRect) { videoURL in
+                            let videoItem = YPMediaVideo(thumbnail: thumbnailFromVideoPath(videoURL),
+                                                         videoURL: videoURL, asset: asset.asset)
+                            resultMediaItems.append(YPMediaItem.video(v: videoItem))
+                            asyncGroup.leave()
+                        }
+                    default:
+                        break
                     }
-
-                case .video:
-                    self.checkVideoLengthAndCrop(for: asset.asset, withCropRect: asset.cropRect) { videoURL in
-                        let videoItem = YPMediaVideo(thumbnail: thumbnailFromVideoPath(videoURL),
-                                                     videoURL: videoURL, asset: asset.asset)
-                        resultMediaItems.append(YPMediaItem.video(v: videoItem))
-                        asyncGroup.leave()
-                    }
-                default:
-                    break
                 }
-            }
-
-            asyncGroup.notify(queue: .main) {
-                if resultMediaItems.count == 1, let onlyOneItem = resultMediaItems.first {
-                    switch onlyOneItem {
-                    case let .photo(p): photoCallback(p)
-                    case let .video(v): videoCallback(v)
-                    }
-                } else {
+                
+                asyncGroup.notify(queue: .main) {
                     multipleItemsCallback(resultMediaItems)
+                    self.delegate?.libraryViewFinishedLoading()
                 }
-                self.delegate?.libraryViewFinishedLoading()
+        } else {
+                let asset = selectedAssets.first!.asset
+                switch asset.mediaType {
+                case .video:
+                    self.checkVideoLengthAndCrop(for: asset, callback: { videoURL in
+                        DispatchQueue.main.async {
+                            self.delegate?.libraryViewFinishedLoading()
+                            let video = YPMediaVideo(thumbnail: thumbnailFromVideoPath(videoURL),
+                                                     videoURL: videoURL, asset: asset)
+                            videoCallback(video)
+                        }
+                    })
+                case .image:
+                    self.fetchImageAndCrop(for: asset) { image, exifMeta in
+                        DispatchQueue.main.async {
+                            self.delegate?.libraryViewFinishedLoading()
+                            let photo = YPMediaPhoto(image: image.resizedImageIfNeeded(),
+                                                     exifMeta: exifMeta,
+                                                     asset: asset)
+                            photoCallback(photo)
+                        }
+                    }
+                case .audio, .unknown:
+                    break
+                @unknown default:
+                    fatalError("Case not supported")
+                }
             }
         }
     }

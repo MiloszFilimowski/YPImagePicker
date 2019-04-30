@@ -14,7 +14,7 @@ public protocol YPImagePickerDelegate: AnyObject {
     func noPhotos()
 }
 
-public class YPImagePicker: UINavigationController {
+open class YPImagePicker: UINavigationController {
     
     private var _didFinishPicking: (([YPMediaItem], Bool) -> Void)?
     public func didFinishPicking(completion: @escaping (_ items: [YPMediaItem], _ cancelled: Bool) -> Void) {
@@ -22,7 +22,7 @@ public class YPImagePicker: UINavigationController {
     }
     public weak var imagePickerDelegate: YPImagePickerDelegate?
     
-    public override var preferredStatusBarStyle: UIStatusBarStyle {
+    open override var preferredStatusBarStyle: UIStatusBarStyle {
         return YPImagePickerConfiguration.shared.preferredStatusBarStyle
     }
 
@@ -55,11 +55,11 @@ public class YPImagePicker: UINavigationController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    public override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+    open override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         return .portrait
     }
     
-    override public func viewDidLoad() {
+override open func viewDidLoad() {
         super.viewDidLoad()
         picker.didClose = { [weak self] in
             self?._didFinishPicking?([], true)
@@ -69,8 +69,6 @@ public class YPImagePicker: UINavigationController {
         navigationBar.isTranslucent = false
 
         picker.didSelectItems = { [weak self] items in
-            let showsFilters = YPConfig.showsFilters
-            
             // Use Fade transition instead of default push animation
             let transition = CATransition()
             transition.duration = 0.3
@@ -121,14 +119,14 @@ public class YPImagePicker: UINavigationController {
                     }
                 }
                 
-                if showsFilters {
+                if YPConfig.showsPhotoFilters {
                     let filterViewController: YPPhotoFiltersVC
                     if let filter = YPConfig.initialFilter {
                         filterViewController = YPPhotoFiltersVC(inputPhoto: photo,
-                                                    isFromSelectionVC: false, initialFilter: filter)
+                                                                isFromSelectionVC: false, initialFilter: filter)
                     } else {
                         filterViewController = YPPhotoFiltersVC(inputPhoto: photo,
-                                                    isFromSelectionVC: false)
+                                                                isFromSelectionVC: false)
                     }
                     // Show filters and then crop
                     filterViewController.didSave = { outputMedia in
@@ -142,7 +140,7 @@ public class YPImagePicker: UINavigationController {
                     showCropVC(photo: photo, completion: completion)
                 }
             case .video(let video):
-                if showsFilters {
+                if YPConfig.showsVideoTrimmer {
                     let videoFiltersVC = YPVideoFiltersVC.initWith(video: video,
                                                                    isFromSelectionVC: false)
                     videoFiltersVC.didSave = { [weak self] outputMedia in

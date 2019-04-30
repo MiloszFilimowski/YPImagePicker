@@ -82,7 +82,7 @@ class ExampleViewController: UIViewController {
         /* Choose what media types are available in the library. Defaults to `.photo` */
         config.library.mediaType = .photoAndVideo
 
-        config.showsFilters = true
+        config.showsPhotoFilters = true
         config.initialFilter = YPFilter(name: "Clarendon", applier: YPFilter.clarendonFilter)
 
 

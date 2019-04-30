@@ -72,7 +72,7 @@ open class YPPhotoFiltersVC: UIViewController, IsMediaFilterVC, UIGestureRecogni
 
                 self.refreshSelectedImage()
                 self.v.collectionView.reloadData()
-                let initialIndex = self.filters.index(where: { $0 == self.selectedFilter }) ?? 0
+                let initialIndex = self.filters.firstIndex(where: { $0 == self.selectedFilter }) ?? 0
                 let indexPath = IndexPath(row: initialIndex, section: 0)
                 self.v.collectionView.selectItem(at: IndexPath(row: initialIndex, section: 0),
                                             animated: false,
@@ -123,7 +123,7 @@ open class YPPhotoFiltersVC: UIViewController, IsMediaFilterVC, UIGestureRecogni
     // MARK: - Methods 🏓
 
     fileprivate func refreshSelectedImage() {
-        if let index = filters.index(where: { $0 == selectedFilter }) {
+        if let index = filters.firstIndex(where: { $0 == selectedFilter }) {
             currentlySelectedImageThumbnail = filteredThumbnailImagesArray[index]
             self.v.imageView.image = currentlySelectedImageThumbnail
         }
