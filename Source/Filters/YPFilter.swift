@@ -26,9 +26,6 @@ public struct YPFilter: Equatable {
     }
 
     public static func == (lhs: YPFilter, rhs: YPFilter) -> Bool {
-        guard !lhs.name.isEmpty && lhs.applier != nil && !rhs.name.isEmpty && rhs.applier != nil else {
-            return false
-        }
         return lhs.name == rhs.name
     }
 }
