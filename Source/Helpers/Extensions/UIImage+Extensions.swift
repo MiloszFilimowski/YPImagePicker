@@ -16,6 +16,13 @@ internal extension UIImage {
         draw(in: CGRect(origin: .zero, size: size))
         return UIGraphicsGetImageFromCurrentImageContext()
     }
+
+    func cropped(to rect: CGRect) -> UIImage? {
+        UIGraphicsBeginImageContextWithOptions(rect.size, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        draw(in: rect)
+        return UIGraphicsGetImageFromCurrentImageContext()
+    }
     
     /// Kudos to Trevor Harmon and his UIImage+Resize category from
     // which this code is heavily inspired.

@@ -117,19 +117,47 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
             // Flip image if taken form the front camera.
             if let device = self.photoCapture.device, device.position == .front {
+
                 let isVertical = image.size.height > image.size.width
                 if !isVertical {
                     image = image.withHorizontallyFlippedOrientation()
                 } else {
                     image = self.flipImage(image: image)
                 }
-            }
-            
-            DispatchQueue.main.async {
-                let noOrietationImage = image.resetOrientation()
-                self.didCapturePhoto?(noOrietationImage.resizedImageIfNeeded())
+                DispatchQueue.main.async {
+                    self.didCapturePhoto?(image)
+                }
+            } else {
+                let cropRect = self.cropRectToPreview(for: image)
+                let finalCgImage = image.cgImage?.cropping(to: cropRect)!
+                image = UIImage(cgImage: finalCgImage!, scale: 1.0, orientation: image.imageOrientation)
+                DispatchQueue.main.async {
+                    self.didCapturePhoto?(image)
+                }
             }
         }
+    }
+
+    func cropRectToPreview(for image: UIImage) -> CGRect {
+        let visibleLayerFrame = photoCapture.previewView.frame
+        let metaRect = photoCapture.videoLayer.metadataOutputRectConverted(fromLayerRect: visibleLayerFrame)
+        var originalSize = image.size
+        if (image.imageOrientation == .left || image.imageOrientation == .right) {
+            // For portrait images, swap the size of the
+            // image because here the output image is actually rotated
+            // relative to what you see on screen.
+            originalSize = CGSize(width: image.size.height, height: image.size.width)
+        }
+
+        var cropRect = CGRect()
+        cropRect.origin.x = metaRect.origin.x * originalSize.width
+        cropRect.origin.y = metaRect.origin.y * originalSize.height
+        cropRect.size.width = metaRect.size.width * originalSize.width
+        cropRect.size.height = metaRect.size.height * originalSize.height
+
+        let integral = cropRect.integral
+
+        return integral
     }
     
     func cropImageToSquare(_ image: UIImage) -> UIImage {
