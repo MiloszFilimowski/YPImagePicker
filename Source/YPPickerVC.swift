@@ -17,8 +17,8 @@ protocol ImagePickerDelegate: AnyObject {
 open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
     
     let albumsManager = YPAlbumsManager()
-    var shouldHideStatusBar = false
-    var initialStatusBarHidden = false
+    var shouldHideStatusBar = true
+    var initialStatusBarHidden = true
     weak var imagePickerDelegate: ImagePickerDelegate?
     
     override open    var prefersStatusBarHidden: Bool {
@@ -120,10 +120,13 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
         
         YPHelper.changeBackButtonIcon(self)
         YPHelper.changeBackButtonTitle(self)
+
+        cameraVC?.v.backButton.addTarget(self, action: #selector(close), for: .touchUpInside)
     }
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: false)
         cameraVC?.v.shotButton.isEnabled = true
         
         updateMode(with: currentController)
@@ -137,6 +140,8 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
             self.setNeedsStatusBarAppearanceUpdate()
         }
     }
+
+
     
     internal func pagerScrollViewDidScroll(_ scrollView: UIScrollView) { }
     
@@ -188,6 +193,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
     
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: false)
         shouldHideStatusBar = false
         stopAll()
     }
