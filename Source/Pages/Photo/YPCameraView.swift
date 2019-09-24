@@ -118,6 +118,7 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
 
         // Layout
         let isIphone4 = UIScreen.main.bounds.height == 480
+        let isIphoneX = UIScreen.main.bounds.height > 800
         let sideMargin: CGFloat = isIphone4 ? 20 : 0
 //        layout(
 //            0,
@@ -127,7 +128,7 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
 
         leftBarBackground.Right == Right
         leftBarBackground.Left == Left
-        leftBarBackground.Top == Top
+        leftBarBackground.Top == Top + (isIphoneX ? 30 : 0)
         leftBarBackground.height(44)
 
         previewHelperViewContainer.centerXAnchor.constraint(equalTo: centerXAnchor).isActive = true
@@ -138,17 +139,34 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
 
         previewViewContainer.centerXAnchor.constraint(equalTo: centerXAnchor).isActive = true
         previewTopContraint = previewViewContainer.topAnchor.constraint(equalTo: leftBarBackground.bottomAnchor)
-        previewTopContraint?.isActive = true
         previewBottomContraint = previewViewContainer.bottomAnchor.constraint(equalTo: settingsBarBackground.topAnchor)
-        previewBottomContraint?.isActive = true
         preview169WidthContraint = previewViewContainer.widthAnchor.constraint(equalTo: previewViewContainer.heightAnchor, multiplier: 9/16)
         preview32WidthContraint = previewViewContainer.widthAnchor.constraint(equalTo: previewViewContainer.heightAnchor, multiplier: 2/3)
         previewFullWidthContraint = previewViewContainer.widthAnchor.constraint(equalTo: widthAnchor)
-        preview169WidthContraint?.isActive = true
         preview43HeightContraint = previewViewContainer.heightAnchor.constraint(equalTo: previewViewContainer.widthAnchor, multiplier: 4/3)
         preview11HeightContraint = previewViewContainer.heightAnchor.constraint(equalTo: previewViewContainer.widthAnchor)
         previewCenterYContraint = previewViewContainer.centerYAnchor.constraint(equalTo: previewHelperViewContainer.centerYAnchor)
 
+        switch YPConfig.initialSelectedRatioButtonTag {
+        case 0:
+            previewTopContraint?.isActive = true
+            previewBottomContraint?.isActive = true
+            preview169WidthContraint?.isActive = true
+        case 1:
+            previewFullWidthContraint?.isActive = true
+            preview43HeightContraint?.isActive = true
+            previewCenterYContraint?.isActive = true
+        case 2:
+            previewTopContraint?.isActive = true
+            previewBottomContraint?.isActive = true
+            preview32WidthContraint?.isActive = true
+        case 3:
+            previewCenterYContraint?.isActive = true
+            previewFullWidthContraint?.isActive = true
+            preview11HeightContraint?.isActive = true
+        default:
+            break;
+        }
 
         progressBar.centerVertically()
         progressBar.centerHorizontally()
@@ -177,7 +195,7 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
 
         settingsBarBackground.Right == Right
         settingsBarBackground.Left == Left
-        settingsBarBackground.Bottom == Bottom
+        settingsBarBackground.Bottom == Bottom + (isIphoneX ? 35 : 0)
         settingsBarBackground.Top == settingsButton.Top - 32
 
         |-(15+sideMargin)-settingsButton.size(42)
@@ -292,14 +310,19 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
             buttonIcon.tintColor = .white
             let buttonLabel = UILabel()
             buttonLabel.textColor = .white
+
+            if i == YPConfig.initialSelectedRatioButtonTag {
+                buttonIcon.tintColor = YPConfig.colors.yellowTintColor
+                buttonLabel.textColor = YPConfig.colors.yellowTintColor
+            }
+
             if i == 0 {
                 buttonIcon.image = YPConfig.icons.rectangle2Icon.withRenderingMode(.alwaysTemplate)
                 buttonLabel.text = "16 : 9"
-                buttonIcon.tintColor = YPConfig.colors.yellowTintColor
-                buttonLabel.textColor = YPConfig.colors.yellowTintColor
             } else if i == 1 {
                 buttonIcon.image = YPConfig.icons.rectangle1Icon.withRenderingMode(.alwaysTemplate)
                 buttonLabel.text = "4 : 3"
+
             } else if i == 2 {
                 buttonIcon.image = YPConfig.icons.rectangle1Icon.withRenderingMode(.alwaysTemplate)
                 buttonLabel.text = "3 : 2"

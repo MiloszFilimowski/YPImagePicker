@@ -12,9 +12,10 @@ import Photos
 
 protocol ImagePickerDelegate: AnyObject {
     func noPhotos()
+    func didChangeRatio(buttonTag: Int)
 }
 
-open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
+open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate, CameraDelegate {
     
     let albumsManager = YPAlbumsManager()
     var shouldHideStatusBar = true
@@ -64,6 +65,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
         // Camera
         if YPConfig.screens.contains(.photo) {
             cameraVC = YPCameraVC()
+            cameraVC?.delegate = self
             cameraVC?.didCapturePhoto = { [weak self] img in
                 self?.didSelectItems?([YPMediaItem.photo(p: YPMediaPhoto(image: img,
                                                                         fromCamera: true))])
@@ -122,6 +124,10 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
         YPHelper.changeBackButtonTitle(self)
 
         cameraVC?.v.backButton.addTarget(self, action: #selector(close), for: .touchUpInside)
+    }
+
+    func didChangeRatio(buttonTag: Int) {
+        imagePickerDelegate?.didChangeRatio(buttonTag: buttonTag)
     }
     
     open override func viewWillAppear(_ animated: Bool) {
@@ -300,6 +306,11 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
     
     @objc
     func close() {
+        if !(cameraVC?.v.ratioBackground.isHidden ?? true) {
+            cameraVC?.showHideRatioView()
+            return
+        }
+
         // Cancelling exporting of all videos
         if let libraryVC = libraryVC {
             libraryVC.mediaManager.forseCancelExporting()

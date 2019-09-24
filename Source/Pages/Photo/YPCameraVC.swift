@@ -10,6 +10,10 @@ import UIKit
 import AVFoundation
 import Photos
 
+protocol CameraDelegate: class {
+    func didChangeRatio(buttonTag: Int)
+}
+
 public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermissionCheckable, UIPickerViewDataSource, UIPickerViewDelegate {
     public func numberOfComponents(in pickerView: UIPickerView) -> Int {
         return 1
@@ -499,11 +503,13 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         }
     }
 
-    var currentRatioTag = 0
+    var currentRatioTag = YPConfig.initialSelectedRatioButtonTag
+    weak var delegate: CameraDelegate?
 
     @objc
     func ratioSelected(sender: UIButton) {
         currentRatioTag = sender.tag
+        delegate?.didChangeRatio(buttonTag: sender.tag)
 
         for button in self.v.ratioButtonsStackView.arrangedSubviews {
             for subview in button.subviews {
@@ -609,6 +615,10 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
     @objc
     func ratioButtonTapped() {
+        self.showHideRatioView()
+    }
+
+    func showHideRatioView() {
         self.v.ratioBackground.isHidden = !self.v.ratioBackground.isHidden
         self.v.ratioLabel.frame = CGRect(x: self.v.ratioBackground.frame.width - 60, y: 15, width: 50, height: 150)
         self.v.ratioSeparator.frame = CGRect(x: self.v.ratioLabel.frame.origin.x, y: 0, width: 1, height: self.v.ratioBackground.frame.height)

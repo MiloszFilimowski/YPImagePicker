@@ -26,7 +26,7 @@ public struct YPColors {
     public var multipleItemsSelectedCircleColor: UIColor?
     
     /// The background color of the bottom of photo and video screens.
-    public var photoVideoScreenBackground: UIColor = .clear
+    public var photoVideoScreenBackground: UIColor = .black
     
     // MARK: - Trimmer
     
