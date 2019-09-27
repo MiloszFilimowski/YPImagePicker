@@ -747,8 +747,10 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         cropRect.size.width = metaRect.size.width * originalSize.width
         cropRect.size.height = metaRect.size.height * originalSize.height
 
-        let integral = cropRect.integral
-
+        var integral = cropRect.integral
+        integral.size.width = 4000
+        integral.size.height = 3000
+        
         return integral
     }
     
