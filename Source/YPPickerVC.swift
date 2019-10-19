@@ -12,13 +12,14 @@ import Photos
 
 protocol ImagePickerDelegate: AnyObject {
     func noPhotos()
+    func didChangeRatio(buttonTag: Int)
 }
 
-open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
+open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate, CameraDelegate {
     
     let albumsManager = YPAlbumsManager()
-    var shouldHideStatusBar = false
-    var initialStatusBarHidden = false
+    var shouldHideStatusBar = true
+    var initialStatusBarHidden = true
     weak var imagePickerDelegate: ImagePickerDelegate?
     
     override open    var prefersStatusBarHidden: Bool {
@@ -64,6 +65,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
         // Camera
         if YPConfig.screens.contains(.photo) {
             cameraVC = YPCameraVC()
+            cameraVC?.delegate = self
             cameraVC?.didCapturePhoto = { [weak self] img in
                 self?.didSelectItems?([YPMediaItem.photo(p: YPMediaPhoto(image: img,
                                                                         fromCamera: true))])
@@ -120,10 +122,17 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
         
         YPHelper.changeBackButtonIcon(self)
         YPHelper.changeBackButtonTitle(self)
+
+        cameraVC?.v.backButton.addTarget(self, action: #selector(close), for: .touchUpInside)
+    }
+
+    func didChangeRatio(buttonTag: Int) {
+        imagePickerDelegate?.didChangeRatio(buttonTag: buttonTag)
     }
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: false)
         cameraVC?.v.shotButton.isEnabled = true
         
         updateMode(with: currentController)
@@ -137,6 +146,8 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
             self.setNeedsStatusBarAppearanceUpdate()
         }
     }
+
+
     
     internal func pagerScrollViewDidScroll(_ scrollView: UIScrollView) { }
     
@@ -188,6 +199,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
     
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: false)
         shouldHideStatusBar = false
         stopAll()
     }
@@ -294,6 +306,11 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate {
     
     @objc
     func close() {
+        if !(cameraVC?.v.ratioBackground.isHidden ?? true) {
+            cameraVC?.showHideRatioView()
+            return
+        }
+
         // Cancelling exporting of all videos
         if let libraryVC = libraryVC {
             libraryVC.mediaManager.forseCancelExporting()

@@ -73,7 +73,7 @@ class ExampleViewController: UIViewController {
 //         config.library.onlySquare = true
 
         /* Set this to true if you want to force the camera output to be a squared image. Defaults to true */
-        // config.onlySquareImagesFromCamera = false
+         config.onlySquareImagesFromCamera = false
 
         /* Ex: cappedTo:1024 will make sure images from the library or the camera will be
            resized to fit in a 1024x1024 box. Defaults to original image size. */
@@ -111,11 +111,11 @@ class ExampleViewController: UIViewController {
 
         /* Defines which screen is shown at launch. Video mode will only work if `showsVideo = true`.
            Default value is `.photo` */
-        config.startOnScreen = .library
+//        config.startOnScreen = .library
 
         /* Defines which screens are shown at launch, and their order.
            Default value is `[.library, .photo]` */
-        config.screens = [.library, .photo, .video]
+        config.screens = [.photo]
         
         /* Can forbid the items with very big height with this property */
 //        config.library.minWidthForItem = UIScreen.main.bounds.width * 0.8
@@ -129,22 +129,21 @@ class ExampleViewController: UIViewController {
         config.video.libraryTimeLimit = 500.0
 
         /* Adds a Crop step in the photo taking process, after filters. Defaults to .none */
-        config.showsCrop = .rectangle(ratio: (16/9))
+//        config.showsCrop = .rectangle(ratio: (16/9))
 
         /* Defines the overlay view for the camera. Defaults to UIView(). */
-        // let overlayView = UIView()
-        // overlayView.backgroundColor = .red
-        // overlayView.alpha = 0.3
-        // config.overlayView = overlayView
+         let overlayView = GridView()
+        overlayView.isHidden = true
+         config.overlayView = overlayView
 
         /* Customize wordings */
         config.wordings.libraryTitle = "Gallery"
 
         /* Defines if the status bar should be hidden when showing the picker. Default is true */
-        config.hidesStatusBar = false
+        config.hidesStatusBar = true
 
         /* Defines if the bottom bar should be hidden when showing the picker. Default is false */
-        config.hidesBottomBar = false
+        config.hidesBottomBar = true
 
         config.library.maxNumberOfItems = 5
         

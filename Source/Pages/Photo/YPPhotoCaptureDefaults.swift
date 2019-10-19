@@ -85,6 +85,15 @@ extension YPPhotoCapture {
         if !isPreviewSetup {
             setupPreview()
             isPreviewSetup = true
+        } else {
+            changePreviewFrame()
+        }
+    }
+
+    func changePreviewFrame() {
+        DispatchQueue.main.async {
+            self.videoLayer.frame = self.previewView.bounds
+            self.videoLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
         }
     }
     

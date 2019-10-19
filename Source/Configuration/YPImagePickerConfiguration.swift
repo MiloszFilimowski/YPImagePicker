@@ -84,6 +84,8 @@ public struct YPImagePickerConfiguration {
     /// Defines if the bottom bar should be hidden when showing the picker. Default is false.
     public var hidesBottomBar = false
 
+    public var initialSelectedRatioButtonTag = 1
+
     /// Defines the preferredStatusBarAppearance
     public var preferredStatusBarStyle = UIStatusBarStyle.default
     
