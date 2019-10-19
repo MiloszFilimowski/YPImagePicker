@@ -686,15 +686,12 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
                 return
             }
 
-            print("Update version: 15")
-            
             self.photoCapture.stopCamera()
 
             // Flip image if taken form the front camera.
             if let device = self.photoCapture.device, device.position == .front {
                 if let rotatedImage = self.flipImage(imageSource: image) {
                     image = rotatedImage
-                    print("image roated 4")
                 }
 
                 DispatchQueue.main.async {
