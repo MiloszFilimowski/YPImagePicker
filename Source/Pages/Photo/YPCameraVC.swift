@@ -676,31 +676,27 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         // causing a crash
         v.shotButton.isEnabled = false
         
-        photoCapture.shoot { imageData in
-            
-            guard let shotImage = UIImage(data: imageData) else {
+        photoCapture.shoot { data in
+
+            guard let imageData = ImageHelper.removeExifData(data: data) else {
                 return
             }
             
-            self.photoCapture.stopCamera()
-            
-            var image = shotImage
-            // Crop the image if the output needs to be square.
-            if self.currentRatioTag == 3 {
-                image = self.cropImageToSquare(image)
+            guard var image = UIImage(data: imageData) else {
+                return
             }
 
-//            image = image.resizedImageIfNeeded()
+            print("Update version: 15")
+            
+            self.photoCapture.stopCamera()
 
             // Flip image if taken form the front camera.
             if let device = self.photoCapture.device, device.position == .front {
-
-                let isVertical = image.size.height > image.size.width
-                if !isVertical {
-                    image = image.withHorizontallyFlippedOrientation()
-                } else {
-                    image = self.flipImage(image: image)
+                if let rotatedImage = self.flipImage(imageSource: image) {
+                    image = rotatedImage
+                    print("image roated 4")
                 }
+
                 DispatchQueue.main.async {
                     self.didCapturePhoto?(image)
                 }
@@ -775,20 +771,69 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
     }
     
     // Used when image is taken from the front camera.
-    func flipImage(image: UIImage!) -> UIImage! {
-        let imageSize: CGSize = image.size
-        UIGraphicsBeginImageContextWithOptions(imageSize, true, 1.0)
-        let ctx = UIGraphicsGetCurrentContext()!
-        ctx.rotate(by: CGFloat(Double.pi/2.0))
-        ctx.translateBy(x: 0, y: -imageSize.width)
-        ctx.scaleBy(x: imageSize.height/imageSize.width, y: imageSize.width/imageSize.height)
-        ctx.draw(image.cgImage!, in: CGRect(x: 0.0,
-                                            y: 0.0,
-                                            width: imageSize.width,
-                                            height: imageSize.height))
-        let newImage: UIImage = UIGraphicsGetImageFromCurrentImageContext()!
+     func flipImage(imageSource : UIImage) -> UIImage? {
+        guard let imgRef = imageSource.cgImage else {
+            return nil
+        }
+
+        let width = CGFloat(imgRef.width)
+        let height = CGFloat(imgRef.height)
+
+        var bounds = CGRect(x: 0, y: 0, width: width, height: height)
+
+        var transform = CGAffineTransform.identity
+        let orient = imageSource.imageOrientation
+        let imageSize = CGSize(width: CGFloat(imgRef.width), height: CGFloat(imgRef.height))
+
+        switch(imageSource.imageOrientation) {
+        case .up:
+            transform = .identity
+        case .upMirrored:
+            transform = CGAffineTransform
+                .init(translationX: imageSize.width, y: 0)
+                .scaledBy(x: -1.0, y: 1.0)
+        case .down:
+            transform = CGAffineTransform
+                .init(translationX: imageSize.width, y: imageSize.height)
+                .rotated(by: CGFloat.pi)
+        case .downMirrored:
+            transform = CGAffineTransform
+                .init(translationX: 0, y: imageSize.height)
+                .scaledBy(x: 1.0, y: -1.0)
+        case .left, .leftMirrored:
+            let storedHeight = bounds.size.height
+            bounds.size.height = bounds.size.width;
+            bounds.size.width = storedHeight;
+            transform = CGAffineTransform
+                .init(translationX: imageSize.height, y: imageSize.width)
+                .scaledBy(x: -1.0, y: 1.0)
+                .rotated(by: 3.0 * CGFloat.pi / 2.0)
+        case .right, .rightMirrored:
+            let storedHeight = bounds.size.height
+            bounds.size.height = bounds.size.width;
+            bounds.size.width = storedHeight;
+            transform = CGAffineTransform
+                .init(scaleX: -1.0, y: 1.0)
+                .rotated(by: CGFloat.pi / 2.0)
+        }
+        UIGraphicsBeginImageContext(bounds.size)
+        if let context = UIGraphicsGetCurrentContext() {
+            if orient == .right || orient == .left {
+                context.scaleBy(x: -1, y: 1)
+                context.translateBy(x: -height, y: 0)
+            } else {
+                context.scaleBy(x: 1, y: -1)
+                context.translateBy(x: 0, y: -height)
+            }
+
+            context.concatenate(transform)
+            context.draw(imgRef, in: CGRect(x: 0, y: 0, width: width, height: height))
+        }
+
+        let imageCopy = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        return newImage
+
+        return imageCopy
     }
     
     @objc
@@ -802,5 +847,52 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         v.flashButton.setImage(flashImage, for: .normal)
         v.flashButton.isHidden = !photoCapture.hasFlash
     }
+}
+
+extension UIImage {
+    func correctlyOrientedImage() -> UIImage {
+        if self.imageOrientation == .up {
+            return self
+        }
+
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        draw(in: CGRect(x: 0, y: 0, width: size.width, height: size.height))
+        let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return normalizedImage ?? self
+    }
+}
+
+class ImageHelper {
+  static func removeExifData(data: Data) -> Data? {
+    guard let source = CGImageSourceCreateWithData(data as NSData, nil) else {
+        return nil
+    }
+    guard let type = CGImageSourceGetType(source) else {
+        return nil
+    }
+    let count = CGImageSourceGetCount(source)
+    let mutableData = NSMutableData(data: data)
+    guard let destination = CGImageDestinationCreateWithData(mutableData, type, count, nil) else {
+        return nil
+    }
+    // Check the keys for what you need to remove
+    // As per documentation, if you need a key removed, assign it kCFNull
+    let removeExifProperties = [
+        String(kCGImagePropertyExifDictionary) : kCFNull,
+        String(kCGImagePropertyOrientation): kCFNull
+    ]
+
+    for i in 0..<count {
+        CGImageDestinationAddImageFromSource(destination, source, i, removeExifProperties as CFDictionary)
+    }
+
+    guard CGImageDestinationFinalize(destination) else {
+        return nil
+    }
+
+    return mutableData as Data
+  }
 }
 
