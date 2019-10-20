@@ -489,7 +489,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
             print("YPCameraVC -> Can't zoom preview for some reason.")
         }
     }
-        
+
     func stopCamera() {
         photoCapture.stopCamera()
     }
@@ -676,13 +676,9 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         // causing a crash
         v.shotButton.isEnabled = false
         
-        photoCapture.shoot { data in
-
-            guard let imageData = ImageHelper.removeExifData(data: data) else {
-                return
-            }
-            
-            guard var image = UIImage(data: imageData) else {
+        photoCapture.shoot { [weak self] data in
+            guard let `self` = self else { return }
+            guard var image = UIImage(data: data) else {
                 return
             }
 
@@ -693,19 +689,54 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
                 if let rotatedImage = self.flipImage(imageSource: image) {
                     image = rotatedImage
                 }
+            }
 
+            print("code version 6")
+            let previewSize = self.photoCapture.previewView.frame.size
+
+            if (previewSize.width == previewSize.height) {
+                image = self.cropImageToSquare(image)
                 DispatchQueue.main.async {
                     self.didCapturePhoto?(image)
                 }
-            } else {
-                let cropRect = self.cropRectToPreview(for: image)
-                let finalCgImage = image.cgImage?.cropping(to: cropRect)!
+                return
+            }
 
-                image = UIImage(cgImage: finalCgImage!, scale: 1.0, orientation: image.imageOrientation)
+            let rotatedImage = image.correctlyOrientedImage()
+            let cgImage = rotatedImage.cgImage!
 
-                DispatchQueue.main.async {
-                    self.didCapturePhoto?(image)
-                }
+            var originalWidth = CGFloat(cgImage.width)
+            var originalHeight = CGFloat(cgImage.height)
+
+            let scaleRatio = max(originalWidth, originalHeight) / max(previewSize.width, previewSize.height)
+
+            var finalHeight = ceil(previewSize.height * scaleRatio)
+            var finalWidth = ceil(previewSize.width * scaleRatio)
+
+            var x: CGFloat = ceil((originalWidth - finalWidth) / 2)
+            var y: CGFloat = 0
+
+            print("image orientation ")
+            print(image.imageOrientation.rawValue)
+
+            if (originalWidth > originalHeight) {
+                finalHeight = ceil(previewSize.width * scaleRatio)
+                finalWidth = ceil(previewSize.height * scaleRatio)
+
+                x = 0
+                y = ceil((originalHeight - finalHeight) / 2)
+            }
+
+            let cropRect = CGRect(x: x, y: y, width: finalWidth, height: finalHeight)
+
+            print("CROP RECT")
+            print(cropRect)
+
+            let finalCgImage = cgImage.cropping(to: cropRect)!
+            image = UIImage(cgImage: finalCgImage, scale: 1.0, orientation: .up)
+
+            DispatchQueue.main.async {
+                self.didCapturePhoto?(image)
             }
         }
     }
@@ -715,9 +746,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
         var metaRect = CGRect(x: 0, y: 0, width: 1, height: 1)
 
-        if currentRatioTag != 3 {
-            metaRect = photoCapture.videoLayer.metadataOutputRectConverted(fromLayerRect: visibleLayerFrame)
-        }
+        metaRect = photoCapture.videoLayer.metadataOutputRectConverted(fromLayerRect: visibleLayerFrame)
 
         var originalSize = image.size
         if (image.imageOrientation == .left || image.imageOrientation == .right) {
@@ -726,23 +755,14 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
             // relative to what you see on screen.
             originalSize = CGSize(width: image.size.height, height: image.size.width)
         }
-
-        var marginToAdd: CGFloat = 0
-        if currentRatioTag == 1 {
-            marginToAdd = 400
-        } else if currentRatioTag == 2 {
-            marginToAdd = 200
-        }
         
         var cropRect = CGRect()
         cropRect.origin.x = metaRect.origin.y * originalSize.height
-        cropRect.origin.y = metaRect.origin.x * originalSize.width - marginToAdd
+        cropRect.origin.y = metaRect.origin.x * originalSize.width
         cropRect.size.width = metaRect.size.width * originalSize.width
         cropRect.size.height = metaRect.size.height * originalSize.height
 
         var integral = cropRect.integral
-        integral.size.width = 4000
-        integral.size.height = 3000
         
         return integral
     }
@@ -768,7 +788,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
     }
     
     // Used when image is taken from the front camera.
-     func flipImage(imageSource : UIImage) -> UIImage? {
+    func flipImage(imageSource : UIImage) -> UIImage? {
         guard let imgRef = imageSource.cgImage else {
             return nil
         }
@@ -844,6 +864,72 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         v.flashButton.setImage(flashImage, for: .normal)
         v.flashButton.isHidden = !photoCapture.hasFlash
     }
+
+    static func CGImageWithCorrectOrientation(_ image : UIImage) -> CGImage {
+
+        if (image.imageOrientation == .up) {
+            return image.cgImage!
+        }
+
+        var transform : CGAffineTransform = CGAffineTransform.identity;
+
+        switch (image.imageOrientation) {
+        case .right, .rightMirrored:
+            transform = transform.translatedBy(x: 0, y: image.size.height)
+            transform = transform.rotated(by: .pi / -2.0)
+            break
+        case .left, .leftMirrored:
+            transform = transform.translatedBy(x: image.size.width, y: 0)
+            transform = transform.rotated(by: .pi / 2.0)
+            break
+        case .down, .downMirrored:
+            transform = transform.translatedBy(x: image.size.width, y: image.size.height)
+            transform = transform.rotated(by: .pi)
+            break
+        default:
+            break
+        }
+
+        switch (image.imageOrientation) {
+        case .rightMirrored, .leftMirrored:
+            transform = transform.translatedBy(x: image.size.height, y: 0);
+            transform = transform.scaledBy(x: -1, y: 1);
+            break
+        case .downMirrored, .upMirrored:
+            transform = transform.translatedBy(x: image.size.width, y: 0);
+            transform = transform.scaledBy(x: -1, y: 1);
+            break
+        default:
+            break
+        }
+
+        let contextWidth : Int
+        let contextHeight : Int
+
+        switch (image.imageOrientation) {
+        case .left, .leftMirrored,
+             .right, .rightMirrored:
+            contextWidth = (image.cgImage?.height)!
+            contextHeight = (image.cgImage?.width)!
+            break
+        default:
+            contextWidth = (image.cgImage?.width)!
+            contextHeight = (image.cgImage?.height)!
+            break
+        }
+
+        let context : CGContext = CGContext(data: nil, width: contextWidth, height: contextHeight,
+                                            bitsPerComponent: image.cgImage!.bitsPerComponent,
+                                            bytesPerRow: 0,
+                                            space: image.cgImage!.colorSpace!,
+                                            bitmapInfo: image.cgImage!.bitmapInfo.rawValue)!;
+
+        context.concatenate(transform);
+        context.draw(image.cgImage!, in: CGRect(x: 0, y: 0, width: CGFloat(contextWidth), height: CGFloat(contextHeight)));
+
+        let cgImage = context.makeImage();
+        return cgImage!;
+    }
 }
 
 extension UIImage {
@@ -862,34 +948,34 @@ extension UIImage {
 }
 
 class ImageHelper {
-  static func removeExifData(data: Data) -> Data? {
-    guard let source = CGImageSourceCreateWithData(data as NSData, nil) else {
-        return nil
-    }
-    guard let type = CGImageSourceGetType(source) else {
-        return nil
-    }
-    let count = CGImageSourceGetCount(source)
-    let mutableData = NSMutableData(data: data)
-    guard let destination = CGImageDestinationCreateWithData(mutableData, type, count, nil) else {
-        return nil
-    }
-    // Check the keys for what you need to remove
-    // As per documentation, if you need a key removed, assign it kCFNull
-    let removeExifProperties = [
-        String(kCGImagePropertyExifDictionary) : kCFNull,
-        String(kCGImagePropertyOrientation): kCFNull
-    ]
+    static func removeExifData(data: Data) -> Data? {
+        guard let source = CGImageSourceCreateWithData(data as NSData, nil) else {
+            return nil
+        }
+        guard let type = CGImageSourceGetType(source) else {
+            return nil
+        }
+        let count = CGImageSourceGetCount(source)
+        let mutableData = NSMutableData(data: data)
+        guard let destination = CGImageDestinationCreateWithData(mutableData, type, count, nil) else {
+            return nil
+        }
+        // Check the keys for what you need to remove
+        // As per documentation, if you need a key removed, assign it kCFNull
+        let removeExifProperties = [
+            String(kCGImagePropertyExifDictionary) : kCFNull,
+            String(kCGImagePropertyOrientation): kCFNull
+        ]
 
-    for i in 0..<count {
-        CGImageDestinationAddImageFromSource(destination, source, i, removeExifProperties as CFDictionary)
-    }
+        for i in 0..<count {
+            CGImageDestinationAddImageFromSource(destination, source, i, removeExifProperties as CFDictionary)
+        }
 
-    guard CGImageDestinationFinalize(destination) else {
-        return nil
-    }
+        guard CGImageDestinationFinalize(destination) else {
+            return nil
+        }
 
-    return mutableData as Data
-  }
+        return mutableData as Data
+    }
 }
 
