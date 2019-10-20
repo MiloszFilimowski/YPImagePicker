@@ -95,12 +95,14 @@ class YPCameraSettingsHelper: NSObject {
     }
 
     func changeFocus(device: AVCaptureDevice, focusValue: Double, completion: (String)->()) {
-        do {
-            try device.lockForConfiguration()
-            device.setFocusModeLocked(lensPosition: Float(focusValue), completionHandler: nil)
-            device.unlockForConfiguration()
-        } catch {
-            print("YPCameraVC -> Can't set focus for some reason.")
+        if (device.isFocusModeSupported(.autoFocus) || device.isFocusModeSupported(.continuousAutoFocus) || device.isFocusModeSupported(.locked)) {
+            do {
+                try device.lockForConfiguration()
+                device.setFocusModeLocked(lensPosition: Float(focusValue), completionHandler: nil)
+                device.unlockForConfiguration()
+            } catch {
+                print("YPCameraVC -> Can't set focus for some reason.")
+            }
         }
 
         completion(String(format: "%.2f", Double(focusValue)))
