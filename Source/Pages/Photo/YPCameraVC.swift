@@ -684,13 +684,6 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
             self.photoCapture.stopCamera()
 
-            // Flip image if taken form the front camera.
-            if let device = self.photoCapture.device, device.position == .front {
-                if let rotatedImage = self.flipImage(imageSource: image) {
-                    image = rotatedImage
-                }
-            }
-
             let previewSize = self.photoCapture.previewView.frame.size
 
             if (previewSize.width == previewSize.height) {
@@ -698,7 +691,20 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
                 DispatchQueue.main.async {
                     self.didCapturePhoto?(image)
                 }
+                // Flip image if taken form the front camera.
+                if let device = self.photoCapture.device, device.position == .front {
+                    if let rotatedImage = self.flipImage(imageSource: image) {
+                        image = rotatedImage
+                    }
+                }
                 return
+            }
+
+            // Flip image if taken form the front camera.
+            if let device = self.photoCapture.device, device.position == .front {
+                if let rotatedImage = self.flipImage(imageSource: image) {
+                    image = rotatedImage
+                }
             }
 
             let rotatedImage = image.correctlyOrientedImage()
