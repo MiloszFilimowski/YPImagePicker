@@ -12,6 +12,7 @@ import Photos
 
 protocol CameraDelegate: class {
     func didChangeRatio(buttonTag: Int)
+    func didChangeGrid(isON: Bool)
 }
 
 public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermissionCheckable, UIPickerViewDataSource, UIPickerViewDelegate {
@@ -427,7 +428,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
     }
 
-    func start(withGrid: Bool? = false) {
+    func start(withGrid: Bool) {
         doAfterPermissionCheck { [weak self] in
             guard let strongSelf = self else {
                 return
@@ -435,7 +436,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
             self?.photoCapture.start(with: strongSelf.v.previewViewContainer, completion: {
                 DispatchQueue.main.async {
                     self?.refreshFlashButton()
-                    self?.v.overlay?.isHidden = !(withGrid ?? false)
+                    self?.v.overlay?.isHidden = !withGrid
                 }
             })
         }
@@ -521,11 +522,9 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
             }
         }
 
-        let gridShowed = !(self.v.overlay?.isHidden ?? true)
         stopCamera()
-        self.v.overlay?.isHidden = true
         self.v.ratioSelected(senderTag: sender.tag)
-        start(withGrid: gridShowed)
+        start(withGrid: !(self.v.overlay?.isHidden ?? true))
     }
 
     @objc
@@ -535,6 +534,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
     @objc
     func gridSwitchChanged() {
+        delegate?.didChangeGrid(isON: self.v.overlay?.isHidden ?? false)
         if let overlay = self.v.overlay {
             overlay.isHidden = !overlay.isHidden
             if let pinchRecognizer = pinchRecognizer {

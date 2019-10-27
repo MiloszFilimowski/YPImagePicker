@@ -86,6 +86,8 @@ public struct YPImagePickerConfiguration {
 
     public var initialSelectedRatioButtonTag = 1
 
+    public var isGridOn = true
+
     /// Defines the preferredStatusBarAppearance
     public var preferredStatusBarStyle = UIStatusBarStyle.default
     

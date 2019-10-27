@@ -60,6 +60,8 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
         self.init(frame: .zero)
 
         self.overlay = overlayView
+        self.overlay?.isHidden = !YPConfig.isGridOn
+        self.gridSwitch.isOn = YPConfig.isGridOn
 
         if let overlayView = overlayView {
             // View Hierarchy

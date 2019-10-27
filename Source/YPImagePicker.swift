@@ -13,6 +13,7 @@ import Photos
 public protocol YPImagePickerDelegate: AnyObject {
     func noPhotos()
     func didChangeRatio(buttonTag: Int)
+    func didChangeGrid(isON: Bool)
 }
 
 open class YPImagePicker: UINavigationController {
@@ -181,4 +182,8 @@ extension YPImagePicker: ImagePickerDelegate {
     func didChangeRatio(buttonTag: Int) {
         self.imagePickerDelegate?.didChangeRatio(buttonTag: buttonTag)
     }
+
+  func didChangeGrid(isON: Bool) {
+      self.imagePickerDelegate?.didChangeGrid(isON: isON)
+  }
 }

@@ -13,6 +13,7 @@ import Photos
 protocol ImagePickerDelegate: AnyObject {
     func noPhotos()
     func didChangeRatio(buttonTag: Int)
+    func didChangeGrid(isON: Bool)
 }
 
 open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate, CameraDelegate {
@@ -129,6 +130,10 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate, CameraDelegate {
     func didChangeRatio(buttonTag: Int) {
         imagePickerDelegate?.didChangeRatio(buttonTag: buttonTag)
     }
+
+    func didChangeGrid(isON: Bool) {
+      imagePickerDelegate?.didChangeGrid(isON: isON)
+    }
     
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -178,7 +183,7 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate, CameraDelegate {
         if let vc = vc as? YPLibraryVC {
             vc.checkPermission()
         } else if let cameraVC = vc as? YPCameraVC {
-            cameraVC.start()
+          cameraVC.start(withGrid: !(cameraVC.v.overlay?.isHidden ?? true))
         } else if let videoVC = vc as? YPVideoCaptureVC {
             videoVC.start()
         }
