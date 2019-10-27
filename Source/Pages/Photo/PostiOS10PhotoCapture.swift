@@ -43,7 +43,7 @@ class PostiOS10PhotoCapture: NSObject, YPPhotoCapture, AVCapturePhotoCaptureDele
         }
 
         settings.isAutoStillImageStabilizationEnabled = isOISEnabled
-        
+
         // Catpure Highest Quality possible.
         settings.isHighResolutionPhotoEnabled = true
         

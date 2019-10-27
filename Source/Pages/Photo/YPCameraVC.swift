@@ -533,6 +533,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
     @objc
     func OISSwitchChanged() {
+      photoCapture.isOISEnabled = self.v.OISSwitch.isOn
       if (self.v.OISSwitch.isOn && (photoCapture.currentFlashMode == .on || photoCapture.currentFlashMode == .auto)) {
         DispatchQueue.main.async {
           let alert = YPAlert.OISNotAvailableAlert(self.view)
