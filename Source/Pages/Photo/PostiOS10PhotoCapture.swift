@@ -79,15 +79,25 @@ class PostiOS10PhotoCapture: NSObject, YPPhotoCapture, AVCapturePhotoCaptureDele
     // MARK: - Flash
     
     func tryToggleFlash() {
-        // if device.hasFlash device.isFlashAvailable //TODO test these
-        switch currentFlashMode {
-        case .auto:
-            currentFlashMode = .on
-        case .on:
-            currentFlashMode = .off
-        case .off:
-            currentFlashMode = .auto
-        }
+      guard let device = device else { return }
+      do {
+          try device.lockForConfiguration()
+          switch device.flashMode {
+          case .auto:
+              currentFlashMode = .on
+              device.flashMode = .on
+          case .on:
+              currentFlashMode = .off
+              device.flashMode = .off
+          case .off:
+              currentFlashMode = .auto
+              device.flashMode = .auto
+          @unknown default:
+              fatalError("Case not supported")
+          }
+          device.unlockForConfiguration()
+      } catch _ { }
+
     }
     
     // MARK: - Shoot

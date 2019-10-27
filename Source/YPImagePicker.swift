@@ -14,7 +14,8 @@ public protocol YPImagePickerDelegate: AnyObject {
     func noPhotos()
     func didChangeRatio(buttonTag: Int)
     func didChangeGrid(isON: Bool)
-  func didChangeOIS(isON: Bool)
+    func didChangeOIS(isON: Bool)
+    func didChange(flashMode: YPFlashMode)
 }
 
 open class YPImagePicker: UINavigationController {
@@ -190,5 +191,9 @@ extension YPImagePicker: ImagePickerDelegate {
 
     func didChangeOIS(isON: Bool) {
       self.imagePickerDelegate?.didChangeOIS(isON: isON)
+    }
+
+    func didChange(flashMode: YPFlashMode) {
+      self.imagePickerDelegate?.didChange(flashMode: flashMode)
     }
 }

@@ -14,6 +14,7 @@ protocol CameraDelegate: class {
     func didChangeRatio(buttonTag: Int)
     func didChangeGrid(isON: Bool)
     func didChangeOIS(isON: Bool)
+    func didChange(flashMode: YPFlashMode)
 }
 
 public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermissionCheckable, UIPickerViewDataSource, UIPickerViewDelegate {
@@ -392,6 +393,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
     override public func viewDidLoad() {
         super.viewDidLoad()
         photoCapture.isOISEnabled = self.v.OISSwitch.isOn
+        photoCapture.currentFlashMode = YPConfig.flashMode
 
         v.flashButton.isHidden = true
         v.flashButton.addTarget(self, action: #selector(flashButtonTapped), for: .touchUpInside)
@@ -428,7 +430,6 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
             pinchRecognizer.delegate = self
             v.previewViewContainer.addGestureRecognizer(pinchRecognizer)
         }
-
     }
 
     func start(withGrid: Bool) {
@@ -532,6 +533,12 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
     @objc
     func OISSwitchChanged() {
+      if (self.v.OISSwitch.isOn && (photoCapture.currentFlashMode == .on || photoCapture.currentFlashMode == .auto)) {
+        DispatchQueue.main.async {
+          let alert = YPAlert.OISNotAvailableAlert(self.view)
+          self.present(alert, animated: true, completion: nil)
+        }
+      }
         delegate?.didChangeOIS(isON: self.v.OISSwitch.isOn)
     }
 
@@ -835,6 +842,15 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
     func flashButtonTapped() {
         photoCapture.tryToggleFlash()
         refreshFlashButton()
+        if (YPConfig.flashMode != photoCapture.currentFlashMode) {
+          self.delegate?.didChange(flashMode: photoCapture.currentFlashMode)
+        }
+        if (self.v.OISSwitch.isOn && (photoCapture.currentFlashMode == .on || photoCapture.currentFlashMode == .auto)) {
+          DispatchQueue.main.async {
+            let alert = YPAlert.OISNotAvailableAlert(self.view)
+            self.present(alert, animated: true, completion: nil)
+          }
+        }
     }
     
     func refreshFlashButton() {

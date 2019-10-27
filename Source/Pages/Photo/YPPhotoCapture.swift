@@ -18,7 +18,7 @@ protocol YPPhotoCapture: class {
     func focus(on point: CGPoint)
     func tryToggleFlash()
     var hasFlash: Bool { get }
-    var currentFlashMode: YPFlashMode { get }
+    var currentFlashMode: YPFlashMode { get set }
     func flipCamera(completion: @escaping () -> Void)
     func shoot(completion: @escaping (Data) -> Void)
     var videoLayer: AVCaptureVideoPreviewLayer! { get set }
@@ -44,7 +44,7 @@ func newPhotoCapture() -> YPPhotoCapture {
     }
 }
 
-enum YPFlashMode {
+public enum YPFlashMode: String {
     case off
     case on
     case auto

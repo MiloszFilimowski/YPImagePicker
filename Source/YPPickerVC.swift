@@ -15,6 +15,7 @@ protocol ImagePickerDelegate: AnyObject {
     func didChangeRatio(buttonTag: Int)
     func didChangeGrid(isON: Bool)
     func didChangeOIS(isON: Bool)
+    func didChange(flashMode: YPFlashMode)
 }
 
 open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate, CameraDelegate {
@@ -138,6 +139,10 @@ open class YPPickerVC: YPBottomPager, YPBottomPagerDelegate, CameraDelegate {
 
     func didChangeOIS(isON: Bool) {
       imagePickerDelegate?.didChangeOIS(isON: isON)
+    }
+
+    func didChange(flashMode: YPFlashMode) {
+      imagePickerDelegate?.didChange(flashMode: flashMode)
     }
     
     open override func viewWillAppear(_ animated: Bool) {
