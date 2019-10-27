@@ -12,7 +12,7 @@ import AVFoundation
 @available(iOS 10.0, *)
 class PostiOS10PhotoCapture: NSObject, YPPhotoCapture, AVCapturePhotoCaptureDelegate {
 
-    let sessionQueue = DispatchQueue(label: "YPCameraVCSerialQueue", qos: .background)
+    let sessionQueue = DispatchQueue(label: "YPCameraVCSerialQueue", qos: .userInteractive)
     let session = AVCaptureSession()
     var deviceInput: AVCaptureDeviceInput?
     var device: AVCaptureDevice? { return deviceInput?.device }
@@ -23,6 +23,7 @@ class PostiOS10PhotoCapture: NSObject, YPPhotoCapture, AVCapturePhotoCaptureDele
     var previewView: UIView!
     var videoLayer: AVCaptureVideoPreviewLayer!
     var currentFlashMode: YPFlashMode = .off
+    var isOISEnabled: Bool = true
     var hasFlash: Bool {
         guard let device = device else { return false }
         return device.hasFlash
@@ -40,6 +41,8 @@ class PostiOS10PhotoCapture: NSObject, YPPhotoCapture, AVCapturePhotoCaptureDele
                 settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.hevc])
             }
         }
+
+        settings.isAutoStillImageStabilizationEnabled = isOISEnabled
         
         // Catpure Highest Quality possible.
         settings.isHighResolutionPhotoEnabled = true

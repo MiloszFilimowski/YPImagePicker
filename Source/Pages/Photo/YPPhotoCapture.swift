@@ -27,6 +27,7 @@ protocol YPPhotoCapture: class {
     // Used by Default extension
     var previewView: UIView! { get set }
     var isCaptureSessionSetup: Bool { get set }
+    var isOISEnabled: Bool { get set }
     var isPreviewSetup: Bool { get set }
     var sessionQueue: DispatchQueue { get }
     var session: AVCaptureSession { get }

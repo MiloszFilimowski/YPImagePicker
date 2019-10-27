@@ -88,6 +88,8 @@ public struct YPImagePickerConfiguration {
 
     public var isGridOn = true
 
+    public var isOISOn = true
+
     /// Defines the preferredStatusBarAppearance
     public var preferredStatusBarStyle = UIStatusBarStyle.default
     

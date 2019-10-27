@@ -23,6 +23,7 @@ class PreiOS10PhotoCapture: YPPhotoCapture {
     var previewView: UIView!
     var videoLayer: AVCaptureVideoPreviewLayer!
     var currentFlashMode: YPFlashMode = .off
+    var isOISEnabled: Bool = true
     var hasFlash: Bool {
         guard let device = device else { return false }
         return device.hasFlash

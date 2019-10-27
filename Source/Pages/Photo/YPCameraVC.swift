@@ -13,6 +13,7 @@ import Photos
 protocol CameraDelegate: class {
     func didChangeRatio(buttonTag: Int)
     func didChangeGrid(isON: Bool)
+    func didChangeOIS(isON: Bool)
 }
 
 public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermissionCheckable, UIPickerViewDataSource, UIPickerViewDelegate {
@@ -390,6 +391,8 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
     override public func viewDidLoad() {
         super.viewDidLoad()
+        photoCapture.isOISEnabled = self.v.OISSwitch.isOn
+
         v.flashButton.isHidden = true
         v.flashButton.addTarget(self, action: #selector(flashButtonTapped), for: .touchUpInside)
         v.shotButton.addTarget(self, action: #selector(shotButtonTapped), for: .touchUpInside)
@@ -529,7 +532,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
     @objc
     func OISSwitchChanged() {
-        print("OIS: \(self.v.OISSwitch.isOn)")
+        delegate?.didChangeOIS(isON: self.v.OISSwitch.isOn)
     }
 
     @objc
