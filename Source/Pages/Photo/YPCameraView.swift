@@ -176,16 +176,16 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
 
         overlayView?.followEdges(previewViewContainer)
 
-        |-(15+sideMargin)-flashButton.size(42)
+        |-(15+sideMargin)-flashButton.size(80)
         flashButton.CenterY == leftBarBackground.CenterY
 
-        |flashButton-(20)-ratioButton.size(42)
+        |flashButton-(44)-ratioButton.size(80)
         ratioButton.CenterY == leftBarBackground.CenterY
 
-        flipButton.size(42)-(15+sideMargin)-|
+        flipButton.size(44)-(20+sideMargin)-|
         flipButton.CenterY == shotButton.CenterY
 
-        backButton.size(42)-(15+sideMargin)-|
+        backButton.size(80)-(20+sideMargin)-|
         backButton.CenterY == leftBarBackground.CenterY
 
         timeElapsedLabel-(15+sideMargin)-|
@@ -201,22 +201,22 @@ class YPCameraView: UIView, UIGestureRecognizerDelegate {
         settingsBarBackground.Bottom == Bottom + (isIphoneX ? 35 : 0)
         settingsBarBackground.Top == settingsButton.Top - 32
 
-        |-(15+sideMargin)-settingsButton.size(42)
+        |-(20+sideMargin)-settingsButton.size(44)
         settingsButton.CenterY == shotButton.CenterY
 
-        |settingsButton-(15)-whiteBalanceButton.size(42)
+        |settingsButton-(20)-whiteBalanceButton.size(44)
         whiteBalanceButton.CenterY == shotButton.CenterY
 
-        whiteBalanceButton-(15)-exposureButton.size(42)
+        whiteBalanceButton-(20)-exposureButton.size(44)
         exposureButton.CenterY == shotButton.CenterY
 
-        exposureButton-(15)-focusButton.size(42)
+        exposureButton-(20)-focusButton.size(44)
         focusButton.CenterY == shotButton.CenterY
 
-        focusButton-(15)-isoButton.size(42)
+        focusButton-(20)-isoButton.size(44)
         isoButton.CenterY == shotButton.CenterY
 
-        doneButton.size(42)-(10+sideMargin)-|
+        doneButton.size(44)-(10+sideMargin)-|
         doneButton.CenterY == shotButton.CenterY
 
         pickerView.transform = CGAffineTransform(rotationAngle: 90 * (.pi/180))
