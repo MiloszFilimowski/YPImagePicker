@@ -389,6 +389,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
     }
 
     var pinchRecognizer: UIPinchGestureRecognizer?
+    var tapRecognizer: UITapGestureRecognizer?
 
     override public func viewDidLoad() {
         super.viewDidLoad()
@@ -420,16 +421,14 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         v.ratioButton.addTarget(self, action: #selector(ratioButtonTapped), for: .touchUpInside)
 
         // Focus
-        let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(self.focusTapped(_:)))
-        tapRecognizer.delegate = self
-        v.previewViewContainer.addGestureRecognizer(tapRecognizer)
+        tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(self.focusTapped(_:)))
+        tapRecognizer!.delegate = self
 
         // Pinch
         pinchRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(self.pinch(_:)))
-        if let pinchRecognizer = pinchRecognizer {
-            pinchRecognizer.delegate = self
-            v.previewViewContainer.addGestureRecognizer(pinchRecognizer)
-        }
+        pinchRecognizer!.delegate = self
+
+        updateGestureRecognizers()
     }
 
     func start(withGrid: Bool) {
@@ -455,7 +454,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
     
     func focus(recognizer: UITapGestureRecognizer) {
 
-        let point = recognizer.location(in: v.previewViewContainer)
+        let point = recognizer.location(in: v)
         
         // Focus the capture
         let viewsize = v.previewViewContainer.bounds.size
@@ -533,13 +532,13 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
 
     @objc
     func OISSwitchChanged() {
-      photoCapture.isOISEnabled = self.v.OISSwitch.isOn
-      if (self.v.OISSwitch.isOn && (photoCapture.currentFlashMode == .on || photoCapture.currentFlashMode == .auto)) {
-        DispatchQueue.main.async {
-          let alert = YPAlert.OISNotAvailableAlert(self.view)
-          self.present(alert, animated: true, completion: nil)
+        photoCapture.isOISEnabled = self.v.OISSwitch.isOn
+        if (self.v.OISSwitch.isOn && (photoCapture.currentFlashMode == .on || photoCapture.currentFlashMode == .auto)) {
+            DispatchQueue.main.async {
+                let alert = YPAlert.OISNotAvailableAlert(self.view)
+                self.present(alert, animated: true, completion: nil)
+            }
         }
-      }
         delegate?.didChangeOIS(isON: self.v.OISSwitch.isOn)
     }
 
@@ -548,14 +547,28 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         delegate?.didChangeGrid(isON: self.v.overlay?.isHidden ?? false)
         if let overlay = self.v.overlay {
             overlay.isHidden = !overlay.isHidden
-            if let pinchRecognizer = pinchRecognizer {
-                if overlay.isHidden {
-                    overlay.removeGestureRecognizer(pinchRecognizer)
-                    self.v.previewViewContainer.addGestureRecognizer(pinchRecognizer)
-                } else {
-                    self.v.previewViewContainer.removeGestureRecognizer(pinchRecognizer)
-                    overlay.addGestureRecognizer(pinchRecognizer)
-                }
+            updateGestureRecognizers()
+        }
+    }
+
+    func updateGestureRecognizers() {
+        guard let overlay = self.v.overlay else { return }
+        if let pinchRecognizer = pinchRecognizer {
+            if overlay.isHidden {
+                overlay.removeGestureRecognizer(pinchRecognizer)
+                self.v.previewViewContainer.addGestureRecognizer(pinchRecognizer)
+            } else {
+                self.v.previewViewContainer.removeGestureRecognizer(pinchRecognizer)
+                overlay.addGestureRecognizer(pinchRecognizer)
+            }
+        }
+        if let tapRecognizer = tapRecognizer {
+            if overlay.isHidden {
+                overlay.removeGestureRecognizer(tapRecognizer)
+                self.v.previewViewContainer.addGestureRecognizer(tapRecognizer)
+            } else {
+                self.v.previewViewContainer.removeGestureRecognizer(tapRecognizer)
+                overlay.addGestureRecognizer(tapRecognizer)
             }
         }
     }
@@ -844,16 +857,16 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         photoCapture.tryToggleFlash()
         refreshFlashButton()
         if (YPConfig.flashMode != photoCapture.currentFlashMode) {
-          self.delegate?.didChange(flashMode: photoCapture.currentFlashMode)
+            self.delegate?.didChange(flashMode: photoCapture.currentFlashMode)
         }
         if (self.v.OISSwitch.isOn && (photoCapture.currentFlashMode == .on || photoCapture.currentFlashMode == .auto)) {
-          DispatchQueue.main.async {
-            let alert = YPAlert.OISNotAvailableAlert(self.view)
-            self.present(alert, animated: true, completion: nil)
-          }
+            DispatchQueue.main.async {
+                let alert = YPAlert.OISNotAvailableAlert(self.view)
+                self.present(alert, animated: true, completion: nil)
+            }
         }
     }
-    
+
     func refreshFlashButton() {
         let flashImage = photoCapture.currentFlashMode.flashImage()
         v.flashButton.setImage(flashImage, for: .normal)
