@@ -58,10 +58,6 @@ open class YPImagePicker: UINavigationController {
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
-    open override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        return .portrait
-    }
     
 override open func viewDidLoad() {
         super.viewDidLoad()
@@ -160,12 +156,6 @@ override open func viewDidLoad() {
         // If user has not customized the Nav Bar tintColor, then use black.
         if UINavigationBar.appearance().tintColor == nil {
             UINavigationBar.appearance().tintColor  = .black
-        }
-
-        if (UIDevice.current.orientation == .landscapeRight) {
-            self.view.transform = CGAffineTransform(rotationAngle: .pi)
-        } else {
-            self.view.transform = CGAffineTransform(rotationAngle: .zero)
         }
     }
     

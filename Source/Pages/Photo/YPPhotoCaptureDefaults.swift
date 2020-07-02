@@ -103,6 +103,14 @@ extension YPPhotoCapture {
             self.videoLayer.frame = self.previewView.bounds
             self.videoLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
             self.previewView.layer.addSublayer(self.videoLayer)
+
+
+            if (UIDevice.current.orientation == .landscapeRight) {
+                self.videoLayer.connection?.videoOrientation = .portraitUpsideDown
+
+            } else {
+                self.videoLayer.connection?.videoOrientation = .portrait
+            }
         }
     }
     
