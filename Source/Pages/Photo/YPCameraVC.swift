@@ -429,6 +429,12 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         pinchRecognizer!.delegate = self
 
         updateGestureRecognizers()
+
+        if (UIDevice.current.orientation == .landscapeRight) {
+            self.view.transform = CGAffineTransform(rotationAngle: .pi)
+        } else {
+            self.view.transform = CGAffineTransform(rotationAngle: .zero)
+        }
     }
 
     func start(withGrid: Bool) {
@@ -783,7 +789,7 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         let imageRef = image.cgImage?.cropping(to: rect)
         return UIImage(cgImage: imageRef!, scale: 1.0, orientation: image.imageOrientation)
     }
-    
+
     // Used when image is taken from the front camera.
     func flipImage(imageSource : UIImage) -> UIImage? {
         guard let imgRef = imageSource.cgImage else {

@@ -161,12 +161,6 @@ override open func viewDidLoad() {
         if UINavigationBar.appearance().tintColor == nil {
             UINavigationBar.appearance().tintColor  = .black
         }
-
-        if (UIDevice.current.orientation == .landscapeRight) {
-            self.view.transform = CGAffineTransform(rotationAngle: .pi)
-        } else {
-            self.view.transform = CGAffineTransform(rotationAngle: .zero)
-        }
     }
     
     deinit {
