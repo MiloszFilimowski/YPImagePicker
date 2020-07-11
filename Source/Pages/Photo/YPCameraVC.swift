@@ -431,9 +431,17 @@ public class YPCameraVC: UIViewController, UIGestureRecognizerDelegate, YPPermis
         updateGestureRecognizers()
 
         if (UIDevice.current.orientation == .landscapeRight) {
-            self.view.transform = CGAffineTransform(rotationAngle: .pi)
+            var bottomSafeAreaPadding: CGFloat = 0
+            if #available(iOS 11.0, *) {
+                let window = UIApplication.shared.keyWindow
+                bottomSafeAreaPadding = window?.safeAreaInsets.bottom ?? 0
+            }
+            self.view.transform = CGAffineTransform(rotationAngle: .pi).concatenating(CGAffineTransform(translationX: 0, y: bottomSafeAreaPadding))
         } else {
             self.view.transform = CGAffineTransform(rotationAngle: .zero)
+            var newFrame = self.view.frame
+            newFrame.origin.y = 0
+            self.view.frame = newFrame
         }
     }
 

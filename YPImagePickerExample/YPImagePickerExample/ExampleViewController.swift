@@ -234,7 +234,7 @@ class ExampleViewController: UIViewController {
         //        print("😀 \(String(describing: self?.resolutionForLocalVideo(url: assetURL)!))")
         //    })
         //}
-
+        picker.modalPresentationStyle = .fullScreen
         present(picker, animated: true, completion: nil)
     }
 }
